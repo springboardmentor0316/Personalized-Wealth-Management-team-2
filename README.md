@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# Personalized-Wealth-Management-team-2
-This is a digital wealth management platform for planning goals (retirement, home, education), building portfolios, and tracking progress with market-linked updates and simulations
-=======
 # Wealth Management Authentication System
 
 A complete authentication system with welcome, registration, and login pages for a wealth management platform.
@@ -107,4 +103,3 @@ http://localhost:3000
 - In production, replace with a proper database (MongoDB, PostgreSQL, etc.)
 - Change JWT_SECRET in production environment
 - Add rate limiting and additional security measures for production
->>>>>>> e10f867 (Initial commit - Wealth Management App)
