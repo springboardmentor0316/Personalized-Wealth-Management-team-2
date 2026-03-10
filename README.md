@@ -204,7 +204,6 @@ After running the application, users can:
 
 All user data is stored securely in the database.
 
----
 
 ## Future Improvements
 
@@ -212,9 +211,3 @@ All user data is stored securely in the database.
 * Advanced portfolio analytics
 * Financial risk analysis
 * Mobile responsive UI improvements
-
----
-
-## License
-
-This project is developed for educational purposes as part of a full-stack development assignment.
