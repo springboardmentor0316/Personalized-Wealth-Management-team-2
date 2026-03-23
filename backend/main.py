@@ -5,10 +5,13 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import Optional
 import models
+from models_pkg.market import MarketPrice  # Import market model directly
 import schemas
 import auth
 from database import SessionLocal, engine
 from dotenv import load_dotenv
+from routes.market import router as market_router
+from routes.simulation import router as simulation_router
 
 load_dotenv()
 
@@ -20,7 +23,7 @@ security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],  # Allow all origins during development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -270,6 +273,74 @@ def get_portfolio(current_user: models.User = Depends(get_current_user), db: Ses
             "total_gain_loss_percent": total_gain_loss_percent
         }
     }
+
+# Include new routers
+app.include_router(market_router)
+app.include_router(simulation_router)
+
+# Celery task endpoints (simplified without Redis dependency)
+@app.get("/tasks/status")
+async def get_task_status():
+    """Get task status (simplified version)"""
+    try:
+        return {
+            "celery_status": "disabled",
+            "message": "Celery is disabled. Using synchronous task execution.",
+            "market_update_available": True,
+            "note": "Use /tasks/market-update for direct market price updates."
+        }
+    except Exception as e:
+        return {
+            "celery_status": "error",
+            "error": str(e),
+            "message": "Failed to get task status"
+        }
+
+@app.post("/tasks/market-update")
+async def trigger_market_update(symbols: Optional[str] = None):
+    """Trigger manual market price update"""
+    try:
+        # Direct execution without Celery for now
+        from services.market_service import market_service
+        from database import SessionLocal
+        
+        db = SessionLocal()
+        try:
+            if symbols:
+                symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+            else:
+                # Default symbols if none provided
+                symbol_list = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN", "META", "NVDA", "BTC-USD", "ETH-USD"]
+            
+            # Fetch and store prices directly
+            fetched_prices = market_service.fetch_real_time_prices(symbol_list)
+            stored_count = market_service.store_prices(db, fetched_prices)
+            
+            return {
+                "success": True,
+                "message": f"Market update completed: {stored_count} prices updated",
+                "symbols": symbol_list,
+                "prices": fetched_prices
+            }
+        finally:
+            db.close()
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update market prices: {str(e)}")
+
+@app.get("/tasks/{task_id}")
+async def get_task_result(task_id: str):
+    """Get result of a specific task (simplified version)"""
+    try:
+        # Return a simple response since we're not using Celery for now
+        return {
+            "task_id": task_id,
+            "status": "completed",
+            "message": "Task execution is now synchronous. Use /tasks/market-update for direct updates.",
+            "ready": True
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get task result: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

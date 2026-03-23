@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 import enum
+from models_pkg.market import MarketPrice  # Import market model
 
 class RiskProfile(enum.Enum):
     CONSERVATIVE = "conservative"

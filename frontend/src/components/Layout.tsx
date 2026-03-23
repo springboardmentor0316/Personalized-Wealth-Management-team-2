@@ -8,6 +8,8 @@ import {
   ArrowRightOnRectangleIcon,
   BanknotesIcon,
   BriefcaseIcon,
+  CurrencyDollarIcon,
+  CalculatorIcon,
 } from '@heroicons/react/24/outline';
 
 interface LayoutProps {
@@ -29,6 +31,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Goals', href: '/goals', icon: ChartBarIcon },
     { name: 'Portfolio', href: '/portfolio', icon: BriefcaseIcon },
     { name: 'Transactions', href: '/transactions', icon: BanknotesIcon },
+    { name: 'Market Data', href: '/market', icon: CurrencyDollarIcon },
+    { name: 'Simulations', href: '/simulations', icon: CalculatorIcon },
     { name: 'Profile', href: '/profile', icon: UserIcon },
   ];
 
@@ -37,11 +41,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
       <div className="flex">
-        <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
-          <div className="flex h-16 items-center justify-center border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900">Wealth Manager</h1>
+        <div className="fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-800 via-slate-700 to-slate-900 shadow-xl">
+          <div className="flex h-16 items-center justify-center border-b border-slate-600">
+            <h1 className="text-xl font-bold text-white">Wealth Manager</h1>
           </div>
           
           <nav className="mt-8 px-4">
@@ -52,15 +56,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <li key={item.name}>
                     <Link
                       to={item.href}
-                      className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                          ? 'bg-blue-600 text-white shadow-lg transform scale-105'
+                          : 'text-slate-300 hover:bg-slate-600 hover:text-white'
                       }`}
                     >
                       <item.icon
                         className={`mr-3 h-5 w-5 ${
-                          isActive ? 'text-blue-700' : 'text-gray-400'
+                          isActive ? 'text-white' : 'text-slate-400'
                         }`}
                         aria-hidden="true"
                       />
@@ -72,22 +76,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </ul>
           </nav>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-600 bg-slate-800/50 backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                   <span className="text-white text-sm font-medium">
                     {user?.full_name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">{user?.full_name}</p>
-                  <p className="text-xs text-gray-500 capitalize">{user?.kyc_status}</p>
+                  <p className="text-sm font-medium text-white">{user?.full_name}</p>
+                  <p className="text-xs text-slate-400 capitalize">{user?.kyc_status}</p>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-all duration-200"
                 title="Logout"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
@@ -97,7 +101,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         <div className="flex-1 ml-64">
-          <header className="bg-white shadow-sm border-b border-gray-200">
+          <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-blue-100">
             <div className="px-6 py-4">
               <h2 className="text-2xl font-semibold text-gray-900">
                 {navigation.find(item => item.href === location.pathname)?.name || 'Dashboard'}

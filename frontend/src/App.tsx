@@ -8,6 +8,8 @@ import Goals from './pages/Goals';
 import PortfolioPage from './pages/Portfolio';
 import Transactions from './pages/Transactions';
 import Profile from './pages/Profile';
+import MarketData from './pages/MarketData';
+import Simulations from './pages/Simulations';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -72,6 +74,20 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Transactions />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/market" element={
+            <ProtectedRoute>
+              <Layout>
+                <MarketData />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/simulations" element={
+            <ProtectedRoute>
+              <Layout>
+                <Simulations />
               </Layout>
             </ProtectedRoute>
           } />
