@@ -10,6 +10,8 @@ import {
   BriefcaseIcon,
   CurrencyDollarIcon,
   CalculatorIcon,
+  LightBulbIcon,
+  BellIcon,
 } from '@heroicons/react/24/outline';
 
 interface LayoutProps {
@@ -33,6 +35,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Transactions', href: '/transactions', icon: BanknotesIcon },
     { name: 'Market Data', href: '/market', icon: CurrencyDollarIcon },
     { name: 'Simulations', href: '/simulations', icon: CalculatorIcon },
+    { name: 'Calculators', href: '/calculators', icon: CalculatorIcon },
+    { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+    { name: 'Recommendations', href: '/recommendations', icon: LightBulbIcon },
+    { name: 'Alerts', href: '/alerts', icon: BellIcon },
+    { name: 'Charts', href: '/charts', icon: ChartBarIcon },
     { name: 'Profile', href: '/profile', icon: UserIcon },
   ];
 

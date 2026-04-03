@@ -25,7 +25,7 @@ const MarketData: React.FC = () => {
     try {
       setLoading(true);
       const symbolList = symbols.split(',').map(s => s.trim()).filter(s => s);
-      const response = await fetch(`http://localhost:8001/market/prices?symbols=${symbolList.join(',')}`);
+      const response = await fetch(`http://localhost:8003/market/prices?symbols=${symbolList.join(',')}`);
       const data = await response.json();
       setPrices(data);
       setLastUpdate(new Date());
@@ -40,7 +40,7 @@ const MarketData: React.FC = () => {
     try {
       setUpdating(true);
       const symbolList = symbols.split(',').map(s => s.trim()).filter(s => s);
-      const response = await fetch(`http://localhost:8001/market/update?symbols=${symbolList.join(',')}`, {
+      const response = await fetch(`http://localhost:8003/market/update?symbols=${symbolList.join(',')}`, {
         method: 'POST'
       });
       const data = await response.json();

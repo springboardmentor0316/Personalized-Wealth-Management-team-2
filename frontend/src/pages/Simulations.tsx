@@ -76,7 +76,7 @@ const Simulations: React.FC = () => {
   const runBasicSimulation = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8001/simulate/', {
+      const response = await fetch('http://localhost:8003/simulate/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -97,7 +97,7 @@ const Simulations: React.FC = () => {
   const runWhatIfSimulation = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8001/simulate/what-if', {
+      const response = await fetch('http://localhost:8003/simulate/what-if', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -122,7 +122,7 @@ const Simulations: React.FC = () => {
   const runGoalProjection = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8001/simulate/goal-projection', {
+      const response = await fetch('http://localhost:8003/simulate/goal-projection', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

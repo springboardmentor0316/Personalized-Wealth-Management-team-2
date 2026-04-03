@@ -12,6 +12,14 @@ from database import SessionLocal, engine
 from dotenv import load_dotenv
 from routes.market import router as market_router
 from routes.simulation import router as simulation_router
+from routes.analytics import router as analytics_router
+from routes.recommendations import router as recommendations_router
+from routes.alerts import router as alerts_router
+from routes.charts import router as charts_router
+from routes.calculators import router as calculators_router
+from routes.export import router as export_router
+from routes.websocket import router as websocket_router
+from routes.tasks import router as tasks_router
 
 load_dotenv()
 
@@ -55,22 +63,46 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 @app.post("/api/auth/register", response_model=schemas.User)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    hashed_password = auth.get_password_hash(user.password)
-    db_user = models.User(
-        email=user.email,
-        full_name=user.full_name,
-        hashed_password=hashed_password,
-        risk_profile=user.risk_profile,
-        kyc_status=user.kyc_status
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+    try:
+        db_user = db.query(models.User).filter(models.User.email == user.email).first()
+        if db_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        hashed_password = auth.get_password_hash(user.password)
+        
+        # Convert string values to enum objects
+        risk_profile = models.RiskProfile.MODERATE
+        if user.risk_profile:
+            try:
+                risk_profile = models.RiskProfile(user.risk_profile.lower())
+            except ValueError:
+                risk_profile = models.RiskProfile.MODERATE
+        
+        kyc_status = models.KYCStatus.PENDING
+        if user.kyc_status:
+            try:
+                kyc_status = models.KYCStatus(user.kyc_status.lower())
+            except ValueError:
+                kyc_status = models.KYCStatus.PENDING
+        
+        db_user = models.User(
+            email=user.email,
+            full_name=user.full_name,
+            hashed_password=hashed_password,
+            risk_profile=risk_profile,
+            kyc_status=kyc_status
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"Registration error: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @app.post("/api/auth/login")
 def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_db)):
@@ -195,11 +227,17 @@ def get_investments(current_user: models.User = Depends(get_current_user), db: S
 
 @app.post("/api/investments", response_model=schemas.Investment)
 def create_investment(investment: schemas.InvestmentCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Validate investment type
+    valid_types = ['stock', 'etf', 'mutual_fund', 'bond', 'crypto']
+    inv_type = investment.type.lower() if investment.type else 'stock'
+    if inv_type not in valid_types:
+        raise HTTPException(status_code=400, detail=f"Invalid investment type: {investment.type}. Valid types: {valid_types}")
+    
     db_investment = models.Investment(
         user_id=current_user.id,
         symbol=investment.symbol,
         name=investment.name,
-        type=investment.type,
+        type=inv_type,
         quantity=investment.quantity,
         average_cost=investment.average_cost,
         current_price=investment.current_price
@@ -216,13 +254,20 @@ def get_transactions(current_user: models.User = Depends(get_current_user), db: 
 
 @app.post("/api/transactions", response_model=schemas.Transaction)
 def create_transaction(transaction: schemas.TransactionCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Validate transaction type
+    valid_types = ['buy', 'sell', 'dividend', 'split']
+    txn_type = transaction.type.lower() if hasattr(transaction, 'type') and transaction.type else 'buy'
+    if txn_type not in valid_types:
+        raise HTTPException(status_code=400, detail=f"Invalid transaction type: {transaction.type}. Valid types: {valid_types}")
+    
     db_transaction = models.Transaction(
         user_id=current_user.id,
         investment_id=transaction.investment_id,
-        type=transaction.type,
+        type=txn_type,
         quantity=transaction.quantity,
         price=transaction.price,
         amount=transaction.amount,
+        fees=transaction.fees,
         date=transaction.date
     )
     db.add(db_transaction)
@@ -277,6 +322,14 @@ def get_portfolio(current_user: models.User = Depends(get_current_user), db: Ses
 # Include new routers
 app.include_router(market_router)
 app.include_router(simulation_router)
+app.include_router(analytics_router)
+app.include_router(recommendations_router)
+app.include_router(alerts_router)
+app.include_router(charts_router)
+app.include_router(calculators_router)
+app.include_router(export_router)
+app.include_router(websocket_router)
+app.include_router(tasks_router)
 
 # Celery task endpoints (simplified without Redis dependency)
 @app.get("/tasks/status")
@@ -342,6 +395,101 @@ async def get_task_result(task_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get task result: {str(e)}")
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "1.0.0",
+        "services": {
+            "api": "up",
+            "database": "connected"
+        }
+    }
+
+@app.get("/api/recommendations/risk-profile")
+async def get_risk_profile_recommendations(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get recommendations based on user's risk profile"""
+    try:
+        from services.recommendation_service import recommendation_service
+        
+        # Get user's risk profile
+        risk_profile = current_user.risk_profile.value if current_user.risk_profile else "moderate"
+        
+        # Get target allocation based on risk profile
+        target_allocations = {
+            "conservative": {"stocks": 40, "bonds": 50, "real_estate": 5, "commodities": 5},
+            "moderate": {"stocks": 60, "bonds": 30, "real_estate": 5, "commodities": 5},
+            "aggressive": {"stocks": 80, "bonds": 15, "real_estate": 3, "commodities": 2}
+        }
+        
+        allocation = target_allocations.get(risk_profile, target_allocations["moderate"])
+        
+        # Generate recommendations based on risk profile
+        recommendations = []
+        
+        if risk_profile == "conservative":
+            recommendations.append({
+                "type": "risk_profile",
+                "title": "Conservative Portfolio Strategy",
+                "description": "Focus on capital preservation with steady income",
+                "suggested_allocation": allocation,
+                "reasoning": "Your conservative risk profile suggests prioritizing stability over high returns",
+                "actions": [
+                    "Increase bond allocation for stability",
+                    "Focus on dividend-paying stocks",
+                    "Consider blue-chip companies with strong balance sheets"
+                ],
+                "confidence": 0.90,
+                "priority": "high"
+            })
+        elif risk_profile == "aggressive":
+            recommendations.append({
+                "type": "risk_profile",
+                "title": "Aggressive Growth Strategy",
+                "description": "Maximize long-term growth with higher risk tolerance",
+                "suggested_allocation": allocation,
+                "reasoning": "Your aggressive risk profile allows for higher volatility in pursuit of greater returns",
+                "actions": [
+                    "Increase growth stock allocation",
+                    "Consider emerging market exposure",
+                    "Add small-cap and technology stocks"
+                ],
+                "confidence": 0.85,
+                "priority": "high"
+            })
+        else:
+            recommendations.append({
+                "type": "risk_profile",
+                "title": "Balanced Growth Strategy",
+                "description": "Balance between growth and stability",
+                "suggested_allocation": allocation,
+                "reasoning": "Your moderate risk profile suggests a balanced approach",
+                "actions": [
+                    "Maintain diversified stock-bond mix",
+                    "Consider balanced mutual funds",
+                    "Regular rebalancing to maintain allocation"
+                ],
+                "confidence": 0.88,
+                "priority": "medium"
+            })
+        
+        return {
+            "success": True,
+            "data": {
+                "risk_profile": risk_profile,
+                "target_allocation": allocation,
+                "recommendations": recommendations,
+                "generated_at": datetime.utcnow().isoformat()
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get risk profile recommendations: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8003)

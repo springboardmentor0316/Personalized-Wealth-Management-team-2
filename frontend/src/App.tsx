@@ -10,6 +10,11 @@ import Transactions from './pages/Transactions';
 import Profile from './pages/Profile';
 import MarketData from './pages/MarketData';
 import Simulations from './pages/Simulations';
+import Analytics from './pages/Analytics';
+import Recommendations from './pages/Recommendations';
+import Alerts from './pages/Alerts';
+import Charts from './pages/Charts';
+import Calculators from './pages/Calculators';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -88,6 +93,41 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Simulations />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/analytics" element={
+            <ProtectedRoute>
+              <Layout>
+                <Analytics />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/recommendations" element={
+            <ProtectedRoute>
+              <Layout>
+                <Recommendations />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/alerts" element={
+            <ProtectedRoute>
+              <Layout>
+                <Alerts />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/charts" element={
+            <ProtectedRoute>
+              <Layout>
+                <Charts />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/calculators" element={
+            <ProtectedRoute>
+              <Layout>
+                <Calculators />
               </Layout>
             </ProtectedRoute>
           } />

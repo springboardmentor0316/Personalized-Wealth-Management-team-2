@@ -4,6 +4,7 @@ from typing import List, Optional, Dict
 from pydantic import BaseModel
 from database import get_db
 from services.market_service import market_service
+from services.market_data_service import market_data_service
 from models_pkg.market import MarketPrice
 import logging
 
@@ -131,3 +132,87 @@ async def get_available_symbols(db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error getting available symbols: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch available symbols")
+
+# Real-time Market Data Endpoints
+
+@router.get("/realtime/price/{symbol}")
+async def get_realtime_price(symbol: str):
+    """
+    Get real-time stock price from Yahoo Finance
+    """
+    try:
+        symbol = symbol.upper().strip()
+        data = market_data_service.get_stock_price(symbol)
+        return {"success": True, "data": data}
+        
+    except Exception as e:
+        logger.error(f"Error getting realtime price for {symbol}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/realtime/historical/{symbol}")
+async def get_realtime_historical(symbol: str, period: str = "1mo"):
+    """
+    Get historical price data from Yahoo Finance
+    """
+    try:
+        symbol = symbol.upper().strip()
+        data = market_data_service.get_historical_data(symbol, period)
+        return {"success": True, "data": data}
+        
+    except Exception as e:
+        logger.error(f"Error getting historical data for {symbol}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/realtime/multiple")
+async def get_multiple_realtime_prices(symbols: str = Query(..., description="Comma-separated symbols")):
+    """
+    Get real-time prices for multiple stocks
+    """
+    try:
+        symbol_list = [s.strip().upper() for s in symbols.split(",")]
+        data = market_data_service.get_multiple_stocks(symbol_list)
+        return {"success": True, "data": data}
+        
+    except Exception as e:
+        logger.error(f"Error getting multiple realtime prices: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/realtime/indices")
+async def get_market_indices():
+    """
+    Get major market indices (S&P 500, NASDAQ, DOW)
+    """
+    try:
+        data = market_data_service.get_market_indices()
+        return {"success": True, "data": data}
+        
+    except Exception as e:
+        logger.error(f"Error getting market indices: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/realtime/search")
+async def search_stocks(query: str = Query(..., description="Search query")):
+    """
+    Search for stocks by name or symbol
+    """
+    try:
+        data = market_data_service.search_stocks(query)
+        return {"success": True, "data": data}
+        
+    except Exception as e:
+        logger.error(f"Error searching stocks: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/realtime/news/{symbol}")
+async def get_stock_news(symbol: str, count: int = 5):
+    """
+    Get recent news for a stock
+    """
+    try:
+        symbol = symbol.upper().strip()
+        data = market_data_service.get_stock_news(symbol, count)
+        return {"success": True, "data": data}
+        
+    except Exception as e:
+        logger.error(f"Error getting stock news for {symbol}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
